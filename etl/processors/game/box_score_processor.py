@@ -1,21 +1,12 @@
 #!/usr/bin/env python3
-"""
-Box Score Processor - handles game-specific player statistics
-Processes batting, pitching, and fielding stats from Baseball Savant API
-"""
 
-import sys
-import os
+import logging
 from datetime import datetime
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 
-# Add project root to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+from models import BoxScore, get_session
 
-from models import BoxScore
-from ..utils import get_session, get_etl_logger
-
-logger = get_etl_logger("box_score_processor")
+logger = logging.getLogger(__name__)
 
 class BoxScoreProcessor:
     """Processes game-specific player statistics (batting, pitching, fielding)"""

@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
-"""
-Player data processor - handles player extraction and creation
-Split from monolithic processor for better modularity
-"""
 
-import sys
-import os
+import logging
 from datetime import datetime
 
-# Add project root to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+from models import Player, get_session
 
-from models import Player
-from ..utils import get_session, get_etl_logger
-
-logger = get_etl_logger("player_data_processor")
+logger = logging.getLogger(__name__)
 
 class PlayerDataProcessor:
     """Handles player data extraction and database operations"""

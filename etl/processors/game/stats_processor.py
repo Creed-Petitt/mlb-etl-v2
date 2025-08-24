@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
-"""
-Stats processor - handles box scores and WPA data
-Split from monolithic processor for better modularity
-"""
 
-import sys
-import os
+import logging
 from datetime import datetime
 
-# Add project root to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+from models import BoxScore, GameWPA, get_session
 
-from models import BoxScore, GameWPA
-from ..utils import get_session, get_etl_logger
-
-logger = get_etl_logger("stats_processor")
+logger = logging.getLogger(__name__)
 
 class StatsProcessor:
     """Handles box score and WPA statistics processing"""

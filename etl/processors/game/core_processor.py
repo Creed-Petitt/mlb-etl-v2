@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
-"""
-Core game processor - handles game metadata, venues, and line scores
-Split from monolithic processor for better modularity
-"""
 
+import logging
 from datetime import datetime
 
-from ..utils import get_session, get_etl_logger
-from models import Game, Venue, GameLineScore
+from models import Game, Venue, GameLineScore, get_session
 
-logger = get_etl_logger("core_game_processor")
+logger = logging.getLogger(__name__)
 
 class CoreGameProcessor:
     """Handles core game data: metadata, venues, line scores"""
@@ -111,9 +107,14 @@ class CoreGameProcessor:
             # Extract venue
             venue_id = game_data.get('venue_id')
             
-            # Extract team data from top-level fields
-            home_team_data = game_data.get('home_team_data', {})
-            away_team_data = game_data.get('away_team_data', {})
+            # Extract team IDs from top level
+            home_team_id = game_data.get('team_home_id')
+            away_team_id = game_data.get('team_away_id')
+            
+            # Get team info from scoreboard if available
+            teams_info = scoreboard.get('teams', {})
+            home_team_info = teams_info.get('home', {})
+            away_team_info = teams_info.get('away', {})
             
             game = Game(
                 game_pk=game_pk,
@@ -122,12 +123,12 @@ class CoreGameProcessor:
                 game_type=game_data.get('gamedayType', 'S'),
                 game_date=game_date,
                 official_date=game_date.date(),
-                home_team_id=game_data.get('team_home_id') or home_team_data.get('id'),
-                home_team_name=home_team_data.get('teamName') or home_team_data.get('name'),
-                home_team_abbreviation=home_team_data.get('abbreviation'),
-                away_team_id=game_data.get('team_away_id') or away_team_data.get('id'),
-                away_team_name=away_team_data.get('teamName') or away_team_data.get('name'),
-                away_team_abbreviation=away_team_data.get('abbreviation'),
+                home_team_id=home_team_id,
+                home_team_name=home_team_info.get('teamName') or home_team_info.get('name'),
+                home_team_abbreviation=home_team_info.get('abbreviation'),
+                away_team_id=away_team_id,
+                away_team_name=away_team_info.get('teamName') or away_team_info.get('name'),
+                away_team_abbreviation=away_team_info.get('abbreviation'),
                 venue_id=venue_id,
                 venue_name=self._extract_venue_name(game_data),
                 status_abstract=scoreboard.get('status', {}).get('abstractGameState', 'Final'),

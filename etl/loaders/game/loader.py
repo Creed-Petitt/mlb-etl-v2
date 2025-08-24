@@ -8,9 +8,8 @@ from datetime import datetime
 
 from models import Game, StatcastPitch, get_session
 from etl.clients.baseball_savant import BaseballSavantAPI
-from etl.loaders.date_manager import DateManager
-from etl.loaders.stats_tracker import StatsTracker
-from etl.processors.orchestrator import GameDataProcessor
+from etl.loaders.game.date_manager import DateManager
+from etl.processors.game.orchestrator import GameDataProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +20,17 @@ class BatchGameLoader:
         
         # Initialize components
         self.date_manager = DateManager()
-        self.stats_tracker = StatsTracker()
         self.api_client = BaseballSavantAPI()
+        
+        # Simple stats tracking
+        self.stats = {
+            'games_processed': 0,
+            'games_successful': 0,
+            'games_failed': 0,
+            'games_skipped': 0,
+            'start_time': None,
+            'total_games': 0
+        }
         
         # Smart date detection
         logger.info("SMART DAILY ETL INITIALIZATION:")
@@ -43,11 +51,11 @@ class BatchGameLoader:
         logger.info(f"Max workers: {self.max_workers}")
         logger.info("="*60)
         
-        self.stats_tracker.start_tracking()
+        self.stats['start_time'] = time.time()
         
         # Get all games in date range
         games_to_process = self._get_games_to_process()
-        self.stats_tracker.set_total_games(len(games_to_process))
+        self.stats['total_games'] = len(games_to_process)
         
         logger.info(f"Found {len(games_to_process)} games to process")
         
@@ -64,7 +72,11 @@ class BatchGameLoader:
                 game = future_to_game[future]
                 try:
                     success = future.result()
-                    self.stats_tracker.update_stats(success)
+                    self.stats['games_processed'] += 1
+                    if success:
+                        self.stats['games_successful'] += 1
+                    else:
+                        self.stats['games_failed'] += 1
                     
                     # Log specific game progress with data status
                     game_pk = game['game_pk']
@@ -75,7 +87,15 @@ class BatchGameLoader:
                     data_status = self._check_game_data_status(game_pk) if success else "NO_DATA"
                     logger.info(f"Game {game_pk} ({game_date}): {status} - {data_status}")
                     
-                    self.stats_tracker.log_progress()
+                    # Log progress every 10 games
+                    if self.stats['games_processed'] % 10 == 0:
+                        elapsed = time.time() - self.stats['start_time']
+                        rate = self.stats['games_processed'] / elapsed if elapsed > 0 else 0
+                        logger.info(f"PROGRESS: {self.stats['games_processed']}/{self.stats['total_games']} "
+                                   f"({self.stats['games_processed']/self.stats['total_games']*100:.1f}%) "
+                                   f"Success: {self.stats['games_successful']} "
+                                   f"Failed: {self.stats['games_failed']} "
+                                   f"Rate: {rate:.2f} games/sec")
                     
                     # Track recent games for termination check
                     self.recent_games_processed.append(game['game_pk'])
@@ -95,9 +115,10 @@ class BatchGameLoader:
                         
                 except Exception as e:
                     logger.error(f"Game {game['game_pk']} failed with exception: {e}")
-                    self.stats_tracker.update_stats(False)
+                    self.stats['games_processed'] += 1
+                    self.stats['games_failed'] += 1
         
-        self.stats_tracker.log_final_results(self.start_date, self.end_date)
+        self._log_final_results()
         
     def _get_games_to_process(self):
 
@@ -173,7 +194,7 @@ class BatchGameLoader:
         logger.info(f"  To Process: {status_counts['To Process']}")
         logger.info(f"  Skipped: {status_counts['Skipped']}")
         
-        self.stats_tracker.increment_skipped(status_counts['Skipped'])
+        self.stats['games_skipped'] = status_counts['Skipped']
         return games_to_process
         
     def _process_single_game(self, game_info):
@@ -308,6 +329,26 @@ class BatchGameLoader:
             return "UNKNOWN_DATA"
         finally:
             session.close()
+    
+    def _log_final_results(self):
+        elapsed = time.time() - self.stats['start_time']
+        
+        logger.info("="*60)
+        logger.info("BATCH GAME LOAD COMPLETE")
+        logger.info("="*60)
+        logger.info(f"Processing window: {self.start_date.strftime('%m/%d/%Y')} - {self.end_date.strftime('%m/%d/%Y')}")
+        logger.info(f"Total time: {elapsed:.2f} seconds ({elapsed/60:.2f} minutes)")
+        logger.info(f"Games processed: {self.stats['games_processed']}")
+        logger.info(f"Games successful: {self.stats['games_successful']}")
+        logger.info(f"Games failed: {self.stats['games_failed']}")
+        logger.info(f"Games skipped (already Final): {self.stats['games_skipped']}")
+        
+        success_rate = self.stats['games_successful']/max(1,self.stats['games_processed'])*100
+        logger.info(f"Success rate: {success_rate:.1f}%")
+        
+        avg_rate = self.stats['games_processed']/elapsed if elapsed > 0 else 0
+        logger.info(f"Average rate: {avg_rate:.2f} games/sec")
+        logger.info("="*60)
     
     def close(self):
 

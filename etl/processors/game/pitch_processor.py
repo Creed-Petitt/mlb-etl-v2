@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
-"""
-Pitch data processor - handles pitch-by-pitch and batted ball data
-Split from monolithic processor for better modularity
-"""
 
-import sys
-import os
+import logging
 from datetime import datetime
 
-# Add project root to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+from models import StatcastPitch, BattedBall, get_session
 
-from models import StatcastPitch, BattedBall
-from ..utils import get_session, get_etl_logger
-
-logger = get_etl_logger("pitch_data_processor")
+logger = logging.getLogger(__name__)
 
 class PitchDataProcessor:
     """Handles pitch-by-pitch and batted ball data processing"""

@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
-"""
-Game data processor - orchestrates modular processors for single games
-Refactored for better modularity and maintainability
-"""
 
+import logging
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 
-from ..utils import get_session, get_etl_logger
-from models import StatcastPitch, BattedBall, GameWPA, BoxScore, GameLineScore
+from models import StatcastPitch, BattedBall, GameWPA, BoxScore, GameLineScore, get_session
 
-# Import new modular processors
-from .core_game_processor import CoreGameProcessor
-from .player_data_processor import PlayerDataProcessor
-from .pitch_data_processor import PitchDataProcessor
+# Import modular processors
+from .core_processor import CoreGameProcessor
+from .player_processor import PlayerDataProcessor
+from .pitch_processor import PitchDataProcessor
 from .box_score_processor import BoxScoreProcessor
 from .stats_processor import StatsProcessor
 from .season_stats_processor import SeasonStatsProcessor
 
-logger = get_etl_logger("game_data_processor")
+logger = logging.getLogger(__name__)
 
 class GameDataProcessor:
     """Orchestrates modular processors for single game data loading"""

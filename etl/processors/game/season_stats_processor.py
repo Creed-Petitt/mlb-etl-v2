@@ -1,20 +1,11 @@
 #!/usr/bin/env python3
-"""
-Season stats processor - handles player and team season statistics
-Only updates on the most recent game for each team to avoid stale data
-"""
 
-import sys
-import os
+import logging
 from datetime import datetime
 
-# Add project root to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+from models import Game, PlayerSeasonStats, TeamSeasonStats, get_session
 
-from models import Game, PlayerSeasonStats, TeamSeasonStats
-from ..utils import get_session, get_etl_logger
-
-logger = get_etl_logger("season_stats_processor")
+logger = logging.getLogger(__name__)
 
 class SeasonStatsProcessor:
     """Handles player season stats and team season records"""
@@ -91,16 +82,22 @@ class SeasonStatsProcessor:
     def _process_team_season_stats(self, game_data, team_type):
         """Process team season statistics from team_data"""
         try:
-            team_data_key = f'{team_type}_team_data'
-            team_data = game_data.get(team_data_key, {})
+            # Get team data from boxscore
+            boxscore = game_data.get('boxscore', {})
+            teams = boxscore.get('teams', {})
+            team_data = teams.get(team_type, {})
             
-            if not team_data:
-                logger.warning(f"No {team_type} team data found")
-                return
+            # Get team info
+            team_info = team_data.get('team', {})
             
-            team_id = team_data.get('id')
-            if not team_id:
-                logger.warning(f"No team ID found for {team_type} team")
+            # Get team ID from top level if not in team_info
+            if team_type == 'home':
+                team_id = game_data.get('team_home_id')
+            else:
+                team_id = game_data.get('team_away_id')
+            
+            if not team_id or team_id == 0:
+                logger.warning(f"No valid team ID found for {team_type} team")
                 return
             
             # Extract team info
