@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 
 from etl.clients.pybaseball_client import PybaseballClient
-from etl.processors.pybaseball.processor import PybaseballProcessor
+from etl.processors.pybaseball.pybaseball_processor import PybaseballProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class PybaseballStatcastLoader:
         logger.info("Pybaseball Statcast Loader initialized")
     
     def load_all_data(self, year=2025):
-        """Load all pybaseball data for the specified year"""
+
         logger.info("="*60)
         logger.info("STARTING PYBASEBALL STATCAST LOAD")
         logger.info(f"Year: {year}")
@@ -93,7 +93,7 @@ class PybaseballStatcastLoader:
         logger.info("="*60)
 
 def main():
-    """Main execution function"""
+
     try:
         loader = PybaseballStatcastLoader()
         stats = loader.load_all_data(2025)

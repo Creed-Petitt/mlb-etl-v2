@@ -16,7 +16,6 @@ from models import (
 logger = logging.getLogger(__name__)
 
 class PybaseballProcessor:
-    """Processes and loads pybaseball data into database - EXACT working logic"""
     
     def __init__(self):
         self.session = get_session()
@@ -28,10 +27,10 @@ class PybaseballProcessor:
         logger.info("Pybaseball processor initialized")
     
     def get_player_classifications(self):
-        """Get batter and pitcher classifications - EXACT copy from working file"""
+
         logger.info("Getting player classifications from database positions...")
         
-        # Get player mapping and positions - EXACT query from working file
+        # Get player mapping and positions 
         result = self.session.execute(text("""
             SELECT mlb_id, full_name, primary_position_name
             FROM players 
@@ -51,7 +50,7 @@ class PybaseballProcessor:
         return batters, pitchers
     
     def process_batter_data(self, batter_data, batters):
-        """Process all batter datasets - EXACT logic from working file"""
+
         logger.info("Processing batter data")
         
         # Count existing records in ALL batter tables before deleting
@@ -82,7 +81,7 @@ class PybaseballProcessor:
             raise
     
     def process_pitcher_data(self, pitcher_data, pitchers):
-        """Process all pitcher datasets - EXACT logic from working file"""
+
         logger.info("Processing pitcher data")
         
         # Count existing records in ALL pitcher tables before deleting
@@ -116,7 +115,7 @@ class PybaseballProcessor:
             raise
     
     def load_batter_exit_velocity_barrels(self, data, batters):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading batter exit velocity and barrels data")
         
         # DEBUG: Check data before filtering
@@ -167,7 +166,7 @@ class PybaseballProcessor:
         self.stats['batters_processed'] += inserted
     
     def load_batter_expected_stats(self, data, batters):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading batter expected stats")
         
         # Clear existing data
@@ -201,7 +200,7 @@ class PybaseballProcessor:
         self.stats['batters_processed'] += inserted
     
     def load_batter_percentile_ranks(self, data, batters):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading batter percentile ranks")
         
         # Clear existing data
@@ -244,7 +243,7 @@ class PybaseballProcessor:
         self.stats['batters_processed'] += inserted
     
     def load_batter_pitch_arsenal(self, data, batters):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading batter pitch arsenal")
         
         # Clear existing data
@@ -287,7 +286,7 @@ class PybaseballProcessor:
     # PITCHER METHODS - EXACT copy from working file using ORM
     
     def load_pitcher_exit_velocity_barrels(self, data, pitchers):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading pitcher exit velocity and barrels allowed")
         
         # Clear existing data
@@ -326,7 +325,7 @@ class PybaseballProcessor:
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_expected_stats(self, data, pitchers):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading pitcher expected stats")
         
         # Clear existing data
@@ -363,7 +362,7 @@ class PybaseballProcessor:
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_percentile_ranks(self, data, pitchers):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading pitcher percentile ranks")
         
         # Clear existing data
@@ -405,7 +404,7 @@ class PybaseballProcessor:
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_arsenal_stats(self, data, pitchers):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading pitcher arsenal stats")
         
         # Clear existing data
@@ -446,7 +445,7 @@ class PybaseballProcessor:
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_pitch_arsenal_usage(self, data, pitchers):
-        """EXACT copy from working file using ORM"""
+
         logger.info(f"Loading pitcher pitch arsenal usage")
         
         # Clear existing data
@@ -480,10 +479,10 @@ class PybaseballProcessor:
         self.stats['pitchers_processed'] += inserted
     
     def get_stats(self):
-        """Return processing statistics"""
+
         return self.stats
     
     def close(self):
-        """Close database session"""
+
         self.session.close()
         logger.info("Database session closed")

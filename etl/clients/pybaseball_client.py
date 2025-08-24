@@ -7,14 +7,13 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 class PybaseballClient:
-    """Client for fetching pybaseball advanced metrics"""
-    
+
     def __init__(self):
         self.cache_enabled = True
         logger.info("Pybaseball client initialized")
     
     def get_batter_data(self, year=2025):
-        """Fetch all batter datasets from pybaseball"""
+
         logger.info(f"Fetching batter data for {year}")
         
         try:
@@ -37,7 +36,7 @@ class PybaseballClient:
             raise
     
     def get_pitcher_data(self, year=2025):
-        """Fetch all pitcher datasets from pybaseball"""
+
         logger.info(f"Fetching pitcher data for {year}")
         
         try:
