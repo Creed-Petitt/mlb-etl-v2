@@ -1,0 +1,11 @@
+*.env
+.env
+.claude
+venv
+CLAUDE.md
+*/__pycache__
+*__pycache__
+*/__init__.py
+*__init__.py
+logs
+*.log
