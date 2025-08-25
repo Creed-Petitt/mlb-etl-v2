@@ -5,7 +5,6 @@ from .season_models import *
 
 # Import utilities
 from .database import *
-from .utils import *
 
 # Version info
 __version__ = "2.0.0"
