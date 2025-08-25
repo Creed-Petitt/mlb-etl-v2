@@ -10,11 +10,8 @@ class PybaseballClient:
 
     def __init__(self):
         self.cache_enabled = True
-        logger.info("Pybaseball client initialized")
     
     def get_batter_data(self, year=2025):
-
-        logger.info(f"Fetching batter data for {year}")
         
         try:
             # Batter datasets - only the 4 that actually exist
@@ -23,7 +20,6 @@ class PybaseballClient:
             batter_percentile_ranks = pyb.statcast_batter_percentile_ranks(year=year)
             batter_pitch_arsenal = pyb.statcast_batter_pitch_arsenal(year=year, minPA=10)
             
-            logger.info(f"Successfully fetched all batter datasets for {year}")
             return {
                 'exit_velocity': batter_exit_velocity,
                 'expected_stats': batter_expected_stats,
@@ -36,8 +32,6 @@ class PybaseballClient:
             raise
     
     def get_pitcher_data(self, year=2025):
-
-        logger.info(f"Fetching pitcher data for {year}")
         
         try:
             # Pitcher datasets - only the 5 that actually exist  
@@ -47,7 +41,6 @@ class PybaseballClient:
             pitcher_arsenal_stats = pyb.statcast_pitcher_arsenal_stats(year=year, minPA=10)
             pitcher_pitch_arsenal_usage = pyb.statcast_pitcher_pitch_arsenal(year=year, arsenal_type="n_")
             
-            logger.info(f"Successfully fetched all pitcher datasets for {year}")
             return {
                 'exit_velocity': pitcher_exit_velocity,
                 'expected_stats': pitcher_expected_stats,

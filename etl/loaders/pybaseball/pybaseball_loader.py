@@ -23,14 +23,10 @@ class PybaseballStatcastLoader:
             'total_records_loaded': 0,
             'start_time': None
         }
-        logger.info("Pybaseball Statcast Loader initialized")
     
     def load_all_data(self, year=2025):
 
-        logger.info("="*60)
-        logger.info("STARTING PYBASEBALL STATCAST LOAD")
-        logger.info(f"Year: {year}")
-        logger.info("="*60)
+        logger.info(f"Starting pybaseball load for {year}")
         
         self.stats['start_time'] = time.time()
         
@@ -44,7 +40,6 @@ class PybaseballStatcastLoader:
             self.stats['pitchers_classified'] = len(pitchers)
             
             # Fetch and process batter data
-            logger.info("Fetching batter data from pybaseball")
             batter_data = self.client.get_batter_data(year)
             processor.process_batter_data(batter_data, batters)
             
@@ -54,7 +49,6 @@ class PybaseballStatcastLoader:
             self.stats['total_records_loaded'] = self.stats['batter_records_loaded']
             
             # Fetch and process pitcher data
-            logger.info("Fetching pitcher data from pybaseball")
             pitcher_data = self.client.get_pitcher_data(year)
             processor.process_pitcher_data(pitcher_data, pitchers)
             
@@ -77,20 +71,8 @@ class PybaseballStatcastLoader:
     def _log_final_results(self):
         elapsed = time.time() - self.stats['start_time']
         
-        logger.info("="*60)
-        logger.info("PYBASEBALL STATCAST LOAD COMPLETE")
-        logger.info("="*60)
-        logger.info(f"Total time: {elapsed:.1f} seconds")
-        logger.info(f"Players classified: {self.stats['batters_classified']} batters, {self.stats['pitchers_classified']} pitchers")
-        logger.info(f"Batter records loaded: {self.stats['batter_records_loaded']:,}")
-        logger.info(f"Pitcher records loaded: {self.stats['pitcher_records_loaded']:,}")
-        logger.info(f"Total records loaded: {self.stats['total_records_loaded']:,}")
-        
-        if elapsed > 0:
-            rate = self.stats['total_records_loaded'] / elapsed
-            logger.info(f"Load rate: {rate:.0f} records/sec")
-        
-        logger.info("="*60)
+        logger.info(f"Pybaseball load complete: {self.stats['total_records_loaded']:,} records in {elapsed:.1f}s "
+                   f"({self.stats['batters_classified']} batters, {self.stats['pitchers_classified']} pitchers)")
 
 def main():
 

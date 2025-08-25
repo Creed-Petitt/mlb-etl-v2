@@ -64,31 +64,24 @@ class GameDataProcessor:
                 return False
             
             # 2. Process player data
-            if not self.player_processor.process_player_data(game_data):
-                logger.warning("Failed to process player data")
+            self.player_processor.process_player_data(game_data)
             
             # 3. Process pitch data
-            if not self.pitch_processor.process_pitch_data(game_data, game_pk):
-                logger.warning("Failed to process pitch data")
+            self.pitch_processor.process_pitch_data(game_data, game_pk)
             
             # 4. Process box scores (batting and pitching stats)
-            if not self.box_score_processor.process_box_scores(game_data, game_pk):
-                logger.warning("Failed to process box scores")
+            self.box_score_processor.process_box_scores(game_data, game_pk)
             
             # 4b. Process WPA data
-            if not self.stats_processor._load_wpa_data(game_data, game_pk):
-                logger.warning("Failed to process WPA data")
+            self.stats_processor._load_wpa_data(game_data, game_pk)
             
             # 5. Process season stats (only for most recent games)
-            if not self.season_stats_processor.process_season_stats(game_data, game_pk):
-                logger.warning("Failed to process season stats")
+            self.season_stats_processor.process_season_stats(game_data, game_pk)
             # Collect stats from all processors
             self._collect_stats_from_processors()
             
             # Commit all changes
             self.session.commit()
-            
-            self._log_completion_stats(game_pk)
             return True
             
         except Exception as e:
@@ -150,17 +143,8 @@ class GameDataProcessor:
     
     def _log_completion_stats(self, game_pk):
         """Log comprehensive completion statistics"""
-        logger.info(f"GAME {game_pk} LOADED SUCCESSFULLY:")
-        logger.info(f"  Games: {self.stats['games_loaded']}")
-        logger.info(f"  Venues: {self.stats['venues_loaded']}")
-        logger.info(f"  Line scores: {self.stats['line_scores_loaded']}")
-        logger.info(f"  Players: {self.stats['players_loaded']}")
-        logger.info(f"  Pitches: {self.stats['pitches_loaded']}")
-        logger.info(f"  Batted balls: {self.stats['batted_balls_loaded']}")
-        logger.info(f"  Box scores: {self.stats['box_scores_loaded']}")
-        logger.info(f"  WPA records: {self.stats['wpa_loaded']}")
-        logger.info(f"  Player season stats: {self.stats['player_season_stats_loaded']}")
-        logger.info(f"  Team season stats: {self.stats['team_season_stats_loaded']}")
+        # Only kept for potential debugging, not called in normal operation
+        pass
         
     def close(self):
         """Close database session and all processors"""

@@ -24,12 +24,9 @@ class PybaseballProcessor:
             'pitchers_processed': 0,
             'total_records': 0
         }
-        logger.info("Pybaseball processor initialized")
     
     def get_player_classifications(self):
 
-        logger.info("Getting player classifications from database positions...")
-        
         # Get player mapping and positions 
         result = self.session.execute(text("""
             SELECT mlb_id, full_name, primary_position_name
@@ -46,25 +43,9 @@ class PybaseballProcessor:
             else:  # Batter (R), Batter (L), or NULL
                 batters.add(mlb_id)
         
-        logger.info(f"Classifications: {len(batters)} batters, {len(pitchers)} pitchers")
         return batters, pitchers
     
     def process_batter_data(self, batter_data, batters):
-
-        logger.info("Processing batter data")
-        
-        # Count existing records in ALL batter tables before deleting
-        batter_ev_count = self.session.query(BatterExitVelocityBarrels).count()
-        batter_exp_count = self.session.query(BatterExpectedStats).count() 
-        batter_perc_count = self.session.query(BatterPercentileRanks).count()
-        batter_arsenal_count = self.session.query(BatterPitchArsenal).count()
-        
-        total_batter_deletes = batter_ev_count + batter_exp_count + batter_perc_count + batter_arsenal_count
-        logger.info(f"BEFORE DELETE: Batter tables have {total_batter_deletes} total records")
-        logger.info(f"  - Exit Velocity: {batter_ev_count}")
-        logger.info(f"  - Expected Stats: {batter_exp_count}")  
-        logger.info(f"  - Percentile Ranks: {batter_perc_count}")
-        logger.info(f"  - Pitch Arsenal: {batter_arsenal_count}")
         
         try:
             self.load_batter_exit_velocity_barrels(batter_data['exit_velocity'], batters)
@@ -73,7 +54,6 @@ class PybaseballProcessor:
             self.load_batter_pitch_arsenal(batter_data['pitch_arsenal'], batters)
             
             self.session.commit()
-            logger.info(f"Successfully processed batter data - Inserted {self.stats['batters_processed']} total records")
             
         except Exception as e:
             self.session.rollback()
@@ -81,23 +61,6 @@ class PybaseballProcessor:
             raise
     
     def process_pitcher_data(self, pitcher_data, pitchers):
-
-        logger.info("Processing pitcher data")
-        
-        # Count existing records in ALL pitcher tables before deleting
-        pitcher_ev_count = self.session.query(PitcherExitVelocityBarrels).count()
-        pitcher_exp_count = self.session.query(PitcherExpectedStats).count()
-        pitcher_perc_count = self.session.query(PitcherPercentileRanks).count() 
-        pitcher_arsenal_count = self.session.query(PitcherArsenalStats).count()
-        pitcher_usage_count = self.session.query(PitcherPitchArsenalUsage).count()
-        
-        total_pitcher_deletes = pitcher_ev_count + pitcher_exp_count + pitcher_perc_count + pitcher_arsenal_count + pitcher_usage_count
-        logger.info(f"BEFORE DELETE: Pitcher tables have {total_pitcher_deletes} total records")
-        logger.info(f"  - Exit Velocity: {pitcher_ev_count}")
-        logger.info(f"  - Expected Stats: {pitcher_exp_count}")
-        logger.info(f"  - Percentile Ranks: {pitcher_perc_count}")
-        logger.info(f"  - Arsenal Stats: {pitcher_arsenal_count}")
-        logger.info(f"  - Usage: {pitcher_usage_count}")
         
         try:
             self.load_pitcher_exit_velocity_barrels(pitcher_data['exit_velocity'], pitchers)
@@ -107,7 +70,6 @@ class PybaseballProcessor:
             self.load_pitcher_pitch_arsenal_usage(pitcher_data['pitch_arsenal_usage'], pitchers)
             
             self.session.commit()
-            logger.info(f"Successfully processed pitcher data - Inserted {self.stats['pitchers_processed']} total records")
             
         except Exception as e:
             self.session.rollback()
@@ -116,25 +78,10 @@ class PybaseballProcessor:
     
     def load_batter_exit_velocity_barrels(self, data, batters):
 
-        logger.info(f"Loading batter exit velocity and barrels data")
-        
-        # DEBUG: Check data before filtering
-        logger.info(f"DEBUG: Raw data has {len(data)} rows")
-        logger.info(f"DEBUG: Raw data columns: {list(data.columns)}")
-        if not data.empty:
-            logger.info(f"DEBUG: Sample player_ids from data: {list(data['player_id'].head(10))}")
-        logger.info(f"DEBUG: Batters set has {len(batters)} players")
-        if batters:
-            logger.info(f"DEBUG: Sample batters: {list(list(batters)[:10])}")
-        
         # Clear existing data
-        deleted_count = self.session.query(BatterExitVelocityBarrels).count()
         self.session.query(BatterExitVelocityBarrels).delete()
-        logger.info(f"DEBUG: Deleted {deleted_count} existing records")
         
         clean_data = data[data['player_id'].isin(batters)]
-        logger.info(f"DEBUG: After filtering: {len(clean_data)} records remain")
-        logger.info(f"Filtered to {len(clean_data)} position players")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -162,18 +109,14 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} batter exit velocity records")
         self.stats['batters_processed'] += inserted
     
     def load_batter_expected_stats(self, data, batters):
 
-        logger.info(f"Loading batter expected stats")
-        
         # Clear existing data
         self.session.query(BatterExpectedStats).delete()
         
         clean_data = data[data['player_id'].isin(batters)]
-        logger.info(f"Filtered to {len(clean_data)} position players")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -196,18 +139,14 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} batter expected stats records")
         self.stats['batters_processed'] += inserted
     
     def load_batter_percentile_ranks(self, data, batters):
 
-        logger.info(f"Loading batter percentile ranks")
-        
         # Clear existing data
         self.session.query(BatterPercentileRanks).delete()
         
         clean_data = data[data['player_id'].isin(batters)]
-        logger.info(f"Filtered to {len(clean_data)} position players")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -239,18 +178,14 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} batter percentile ranks records")
         self.stats['batters_processed'] += inserted
     
     def load_batter_pitch_arsenal(self, data, batters):
 
-        logger.info(f"Loading batter pitch arsenal")
-        
         # Clear existing data
         self.session.query(BatterPitchArsenal).delete()
         
         clean_data = data[data['player_id'].isin(batters)]
-        logger.info(f"Filtered to {len(clean_data)} batter pitch arsenal records")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -280,20 +215,16 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} batter pitch arsenal records")
         self.stats['batters_processed'] += inserted
     
     # PITCHER METHODS - EXACT copy from working file using ORM
     
     def load_pitcher_exit_velocity_barrels(self, data, pitchers):
 
-        logger.info(f"Loading pitcher exit velocity and barrels allowed")
-        
         # Clear existing data
         self.session.query(PitcherExitVelocityBarrels).delete()
         
         clean_data = data[data['player_id'].isin(pitchers)]
-        logger.info(f"Filtered to {len(clean_data)} pitchers")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -321,18 +252,14 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} pitcher exit velocity records")
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_expected_stats(self, data, pitchers):
 
-        logger.info(f"Loading pitcher expected stats")
-        
         # Clear existing data
         self.session.query(PitcherExpectedStats).delete()
         
         clean_data = data[data['player_id'].isin(pitchers)]
-        logger.info(f"Filtered to {len(clean_data)} pitchers")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -358,18 +285,14 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} pitcher expected stats records")
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_percentile_ranks(self, data, pitchers):
 
-        logger.info(f"Loading pitcher percentile ranks")
-        
         # Clear existing data
         self.session.query(PitcherPercentileRanks).delete()
         
         clean_data = data[data['player_id'].isin(pitchers)]
-        logger.info(f"Filtered to {len(clean_data)} pitchers")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -400,18 +323,14 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} pitcher percentile ranks records")
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_arsenal_stats(self, data, pitchers):
 
-        logger.info(f"Loading pitcher arsenal stats")
-        
         # Clear existing data
         self.session.query(PitcherArsenalStats).delete()
         
         clean_data = data[data['player_id'].isin(pitchers)]
-        logger.info(f"Filtered to {len(clean_data)} pitcher arsenal stats records")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -441,19 +360,15 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} pitcher arsenal stats records")
         self.stats['pitchers_processed'] += inserted
     
     def load_pitcher_pitch_arsenal_usage(self, data, pitchers):
 
-        logger.info(f"Loading pitcher pitch arsenal usage")
-        
         # Clear existing data
         self.session.query(PitcherPitchArsenalUsage).delete()
         
         # Note: uses 'pitcher' column not 'player_id' - EXACT from working file
         clean_data = data[data['pitcher'].isin(pitchers)]
-        logger.info(f"Filtered to {len(clean_data)} pitcher usage records")
         
         inserted = 0
         for _, row in clean_data.iterrows():
@@ -475,7 +390,6 @@ class PybaseballProcessor:
             self.session.add(record)
             inserted += 1
         
-        logger.info(f"SUCCESS: Loaded {inserted} pitcher usage records")
         self.stats['pitchers_processed'] += inserted
     
     def get_stats(self):
@@ -485,4 +399,3 @@ class PybaseballProcessor:
     def close(self):
 
         self.session.close()
-        logger.info("Database session closed")

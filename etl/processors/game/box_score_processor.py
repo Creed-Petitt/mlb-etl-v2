@@ -27,7 +27,6 @@ class BoxScoreProcessor:
         Handles batting stats, pitching stats, and fielding stats
         """
         try:
-            logger.info(f"Processing box scores for game {game_pk}")
             
             # Reset stats
             self.stats = {k: 0 for k in self.stats}
@@ -40,18 +39,12 @@ class BoxScoreProcessor:
                 team_data = teams.get(team_type, {})
                 players = team_data.get('players', {})
                 
-                logger.debug(f"Processing {len(players)} players for {team_type} team")
-                
                 for player_key, player_data in players.items():
                     if not player_key.startswith('ID'):
                         continue
                     
                     self._process_player_box_score(player_data, player_key, team_type, game_pk)
             
-            logger.info(f"Box score processing complete: {self.stats['box_scores_loaded']} total records")
-            logger.info(f"  Batting records: {self.stats['batting_records']}")
-            logger.info(f"  Pitching records: {self.stats['pitching_records']}")
-            logger.info(f"  Fielding records: {self.stats['fielding_records']}")
             
             return True
             
@@ -82,8 +75,6 @@ class BoxScoreProcessor:
             # If record exists, we might be backfilling missing pitching stats
             if existing_box:
                 updated = self._update_existing_box_score(existing_box, player_data)
-                if updated:
-                    logger.debug(f"Updated existing box score for {player_name}")
                 return
             
             # Create new box score record
@@ -94,7 +85,6 @@ class BoxScoreProcessor:
             if box_score:
                 self.session.add(box_score)
                 self.stats['box_scores_loaded'] += 1
-                logger.debug(f"Created box score for {player_name}")
             
         except Exception as e:
             logger.error(f"Error processing player {player_key}: {e}")
@@ -124,7 +114,6 @@ class BoxScoreProcessor:
         
         # Skip players with no meaningful stats (bench players, etc.)
         if not has_batting and not has_pitching:
-            logger.debug(f"Skipping {player_name} - no meaningful batting or pitching stats")
             return None
         
         # Create box score record
@@ -167,7 +156,6 @@ class BoxScoreProcessor:
         box_score.triples = batting_stats.get('triples', 0)
         box_score.home_runs = batting_stats.get('homeRuns', 0)
         
-        logger.debug(f"Added batting stats: {box_score.at_bats} AB, {box_score.hits} H, {box_score.rbi} RBI")
     
     def _add_pitching_stats(self, box_score: BoxScore, pitching_stats: Dict):
         """Add pitching statistics to box score record"""
@@ -187,14 +175,13 @@ class BoxScoreProcessor:
         box_score.pitcher_walks = pitching_stats.get('baseOnBalls', 0)
         box_score.pitcher_strikeouts = pitching_stats.get('strikeOuts', 0)
         
-        logger.info(f"ADDED PITCHING STATS: {box_score.player_name} - {box_score.innings_pitched} IP, {box_score.earned_runs} ER, {box_score.pitcher_strikeouts} K")
-        logger.debug(f"Full pitching stats data: {pitching_stats}")
     
     def _add_fielding_stats(self, box_score: BoxScore, fielding_stats: Dict):
         """Add fielding statistics to box score record (future enhancement)"""
         # Note: Current BoxScore model doesn't have fielding columns
         # This is a placeholder for future enhancement
-        logger.debug("Fielding stats available but not stored (model limitation)")
+        # Fielding stats available but not stored (model limitation)
+        pass
     
     def _update_existing_box_score(self, existing_box: BoxScore, player_data: Dict) -> bool:
         """Update existing box score record with missing data (for backfill)"""
@@ -207,7 +194,6 @@ class BoxScoreProcessor:
             if pitching_stats and existing_box.innings_pitched is None:
                 self._add_pitching_stats(existing_box, pitching_stats)
                 updated = True
-                logger.debug(f"Added missing pitching stats to {existing_box.player_name}")
             
             return updated
             
