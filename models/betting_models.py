@@ -446,9 +446,6 @@ class PrizePicksPlayer(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    projections = relationship("PrizePicksProjection", back_populates="player")
-
 class PrizePicksTeam(Base):
     """Team data from PrizePicks"""
     __tablename__ = 'prizepicks_teams'
@@ -474,9 +471,6 @@ class PrizePicksGame(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    projections = relationship("PrizePicksProjection", back_populates="game")
-
 class PrizePicksProjection(Base):
     """Main betting props table - current active props"""
     __tablename__ = 'prizepicks_projections'
@@ -497,42 +491,23 @@ class PrizePicksProjection(Base):
     odds_type = Column(String(20))                                          # "demon", "standard", etc.
     is_active = Column(Boolean, default=True)                               # False when prop is removed/settled
     created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    player = relationship("PrizePicksPlayer", back_populates="projections")
-    game = relationship("PrizePicksGame", back_populates="projections")
-    line_movements = relationship("PrizePicksLineMovement", back_populates="projection")
-
-class PrizePicksLineMovement(Base):
-    """Track every time a line changes - separate history table"""
-    __tablename__ = 'prizepicks_line_movements'
-    
-    id = Column(Integer, primary_key=True)
-    projection_id = Column(Integer, ForeignKey('prizepicks_projections.id'), nullable=False)
-    old_line_score = Column(DECIMAL(5,2))                                   # Previous line
-    new_line_score = Column(DECIMAL(5,2))                                   # New line
-    movement_type = Column(String(20))                                      # "line_up", "line_down", "new_prop"
-    moved_at = Column(DateTime, default=datetime.utcnow)                    # When change occurred
-    fetched_at = Column(DateTime, default=datetime.utcnow)                  # When we detected it
-    
-    # Relationships
-    projection = relationship("PrizePicksProjection", back_populates="line_movements")
 
 class PrizePicksSettlement(Base):
-    """When props are settled - store final result and odds history"""
+    """Settlement results for PrizePicks projections"""
     __tablename__ = 'prizepicks_settlements'
     
     id = Column(Integer, primary_key=True)
-    projection_id = Column(Integer, ForeignKey('prizepicks_projections.id'), nullable=False)
-    final_line_score = Column(DECIMAL(5,2))                                 # Final line when settled
-    actual_result = Column(DECIMAL(5,2))                                    # Actual player performance
-    settlement_result = Column(String(20))                                  # "over", "under", "push"
+    projection_id = Column(Integer, ForeignKey('prizepicks_projections.id'), unique=True, nullable=False)
+    final_line_score = Column(DECIMAL(5,2), nullable=False)                 # Line at settlement time
+    actual_result = Column(DECIMAL(5,2), nullable=False)                    # Actual stat value achieved
+    settlement_result = Column(String(10), nullable=False)                  # "over", "under", "push"
     settled_at = Column(DateTime, default=datetime.utcnow)
     
-    # JSON field to store complete odds history for analysis
-    odds_history = Column(Text)                                             # JSON string of all line movements
+    # Optional metadata
+    game_pk = Column(Integer)                                               # MLB game_pk if matched
+    player_name_used = Column(String(100))                                  # Name used for matching
+    notes = Column(Text)                                                    # Any issues or special cases
     
-    # Relationships  
-    projection = relationship("PrizePicksProjection")
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
